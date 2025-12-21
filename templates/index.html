@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Keyframe Detection • Deep Learning Project</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0e27;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(90, 103, 216, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e2e8f0;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 50px 40px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            margin-bottom: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(139, 92, 246, 0.1), 
+                transparent);
+            animation: shine 8s infinite;
+        }
+
+        @keyframes shine {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(50%); }
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 3.5em;
+            font-weight: 900;
+            margin-bottom: 15px;
+            letter-spacing: -0.02em;
+            text-shadow: 0 0 80px rgba(139, 92, 246, 0.5);
+            position: relative;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1.15em;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+        }
+
+        .architecture-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, 
+                rgba(99, 102, 241, 0.2) 0%, 
+                rgba(168, 85, 247, 0.2) 100%);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: #c4b5fd;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.95em;
+            margin-top: 20px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            cursor: default;
+        }
+
+        .architecture-badge:hover {
+            background: linear-gradient(135deg, 
+                rgba(99, 102, 241, 0.3) 0%, 
+                rgba(168, 85, 247, 0.3) 100%);
+            border-color: rgba(139, 92, 246, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        .upload-section {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 50px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            text-align: center;
+        }
+
+        .section-title {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(139, 92, 246, 0.4);
+            border-radius: 20px;
+            padding: 70px 30px;
+            margin: 30px 0;
+            background: linear-gradient(135deg, 
+                rgba(99, 102, 241, 0.05) 0%, 
+                rgba(168, 85, 247, 0.05) 100%);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            background-size: 200% 100%;
+            color: white;
+            padding: 16px 42px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 4px 15px rgba(99, 102, 241, 0.4),
+                0 1px 2px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.3px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            background-position: 100% 0;
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 
+                0 8px 25px rgba(99, 102, 241, 0.6),
+                0 2px 4px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+
+        .btn:disabled {
+            background: rgba(100, 116, 139, 0.3);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .btn-demo {
+            background: linear-gradient(135deg, #ec4899 0%, #f43f5e 50%, #ef4444 100%);
+            background-size: 200% 100%;
+            box-shadow: 
+                0 4px 15px rgba(236, 72, 153, 0.4),
+                0 1px 2px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            margin-left: 15px;
+        }
+
+        .btn-demo:hover {
+            box-shadow: 
+                0 8px 25px rgba(236, 72, 153, 0.6),
+                0 2px 4px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2)x 40px rgba(139, 92, 246, 0.2);
+        }
+
+        .upload-area.dragover {
+            background: linear-gradient(135deg, 
+                rgba(99, 102, 241, 0.15) 0%, 
+                rgba(168, 85, 247, 0.15) 100%);
+            border-color: #a78bfa;
+            transform: scale(1.02);
+            box-shadow: 0 0 50px rgba(139, 92, 246, 0.4);
+        }
+
+        .upload-icon {
+            font-size: 5em;
+            margin-bottom: 25px;
+            animation: float 3s ease-in-out infinite;
+            position: relative;
+            z-index:40px 0;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 25px;
+            position: relative;
+        }
+
+        .spinner::before,
+        .spinner::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        .spinner::before {
+            width: 60px;
+            height: 60px;
+            border: 3px solid transparent;
+            border-top-color: #8b5cf6;
+            border-right-color: #8b5cf6;
+            animation: spin 1s linear infinite;
+        }
+
+        .spinner::after {
+            width: 45px;
+            height: 45px;
+            top: 7.5px;
+            left: 7.5px;
+            border: 3px solid transparent;
+            border-bottom-color: #60a5fa;
+            border-left-color: #60a5fa;
+            animation: spin 0.7s linear infinite reverse;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading p {
+            color: #94a3b8;
+            font-weight: 500;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 50px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .video-info {
+            background: linear-gradient(135deg, 
+                rgba(99, 102, 241, 0.1) 0%, 
+                rgba(168, 85, 247, 0.1) 100%);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+        }
+
+        .info-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .info-item:hover {
+            background: rgba(15, 23, 42, 0.6);
+            transform: translateY(-3px);
+        }
+
+        .info-label {
+            color: #94a3b8;
+            font-size: 0.85em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-40px 0;
+            text-align: center;
+            padding: 30px;
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 20px;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .plot-container img {
+            max-width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .plot-container img:hover {
+            transform: scale(1.02
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            text-align: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .keyframe-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .keyframe-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .keyframe-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                0 12px 30px rgba(139, 92, 246, 0.3),
+                0 0 40px rgba(139, 92, 246, 0.1);
+            border-color: rgba(139, 92, 246, 0.5);
+        }
+
+        .keyframe-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .keyframe-card:hover .keyframe-image {
+            transform: scale(1.05);
+        }
+
+        .keyframe-info {
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.4);
+        }
+
+        .keyframe-info strong {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        .keyframe-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            font-size: 0.9em;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .score-badge {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85em;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+        }
+
+        .error {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+            color: #fca5a5;
+            padding: 20px 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            margin: 20px 0;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .success {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.1) 100%);
+            color: #86efac;
+            padding: 18px 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            margin-bottom: 30px;
+            display: none;
+            backdrop-filter: blur(10px);
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-area h3 {
+            color: #e2e8f0;
+            font-size: 1.4em;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+
+        .upload-area p {
+            color: #94a3b8;
+            position: relative;
+            z-index: 1;
+        }
+
+        .upload-area label.btn {
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2em;
+            }
+
+            .subtitle {
+                font-size: 1em;
+            }
+
+            header {
+                padding: 35px 25px;
+            }
+
+            .upload-section,
+            .results-section {
+                padding: 30px 20px;
+            }
+
+            .upload-area {
+                padding: 50px 20px;
+            }
+
+            .btn {
+                padAI Keyframe Detection</h1>
+            <p class="subtitle">Advanced Deep Learning • ResNet50 + Transformer + Dual Temporal Attention</p>
+            <div class="architecture-badge">
+                <span>⚡</span>
+                <span>CNN + Transformer + Multi-Head Attention</span>
+            .btn-demo {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+
+            .keyframes-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .video-info {Your Video Here</h3>
+                    <p style="margin: 20px 0; font-size: 1.05em;">or</p>
+                    <label for="videoInput" class="btn">📁 Choose Video File</label>
+                    <input type="file" id="videoInput" accept="video/*">
+                    <p style="margin-top: 20px; font-size: 0.9em; color: #64748b;">Supported: MP4, AVI, MOV, WEBM • Max 30 seconds recommended</p>
+                </div>
+
+                <div style="margin-top: 30px; display: flex; justify-content: center; flex-wrap: wrap; gap: 15px;">
+                    <button class="btn" id="processBtn" disabled>🚀 Detect Keyframes</button>
+                    <button class="btn btn-demo" id="demoBtn">✨
+        /* Scroll animations */
+        .animate-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Glow effects */
+        .glow {
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);olor: #667eea;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .error {
+            background: #fff0f0;
+            color: #d00;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #fcc;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .success {
+            background: #f0fff0;
+            color: #0a0;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .upload-area {
+                padding: 40px 15px;
+            }
+
+            .keyframes-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 Keyframe Detection System</h1>
+            <p class="subtitle">Deep Learning Project - Model 2: ResNet50 + Transformer + Dual Temporal Attention</p>
+            <div class="architecture-badge">
+                🔥 CNN + Transformer + Multi-Head Attention
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="upload-section">
+                <h2 class="section-title">📤 Upload Video</h2>
+                <p style="color: #666; margin-bottom: 20px;">Upload a video (max 30 seconds recommended) to detect keyframes</p>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">🎥</div>
+                    <h3>Drag & Drop Video Here</h3>
+                    <p style="color: #999; margin: 15px 0;">or</p>
+                    <label for="videoInput" class="btn">Choose Video File</label>
+                    <input type="file" id="videoInput" accept="video/*">
+                    <p style="color: #999; margin-top: 15px; font-size: 0.9em;">Supported formats: MP4, AVI, MOV, WEBM</p>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button class="btn" id="processBtn" disabled>🚀 Detect Keyframes</button>
+                    <button class="btn btn-demo" id="demoBtn">🎨 Try Demo Video</button>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Processing video... This may take a moment ⏳</p>
+                </div>
+
+                <div class="error" id="error"></div>
+            </div>
+
+            <div class="results-section" id="results">
+                <div class="success" id="success">✅ Video processed successfully!</div>
+
+                <div class="video-info" id="videoInfo">
+                    <div class="info-item">
+                        <div class="info-label">Duration</div>
+                        <div class="info-value" id="duration">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">FPS</div>
+                        <div class="info-value" id="fps">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Total Frames</div>
+                        <div class="info-value" id="totalFrames">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Keyframes Detected</div>
+                        <div class="info-value" id="keyframeCount">-</div>
+                    </div>
+                </div>
+
+                <h2 class="section-title">📊 Importance Curve</h2>
+                <div class="plot-container" id="plotContainer">
+                    <img id="importancePlot" src="" alt="Importance Curve">
+                </div>
+
+                <h2 class="section-title">🎯 Detected Keyframes</h2>
+                <div class="keyframes-grid" id="keyframesGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+
+        // Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const videoInput = document.getElementById('videoInput');
+        const processBtn = document.getElementById('processBtn');
+        const demoBtn = document.getElementById('demoBtn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const results = document.getElementById('results');
+        const success = document.getElementById('success');
+
+        // Upload area drag & drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        // File input change
+        videoInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (!file.type.startsWith('video/')) {
+                showError('Please select a valid video file');
+                return;
+            }
+
+            selectedFile = file;
+            processBtn.disabled = false;
+            uploadArea.querySelector('h3').textContent = `✓ ${file.name}`;
+            hideError();
+        }
+
+        // Process button
+        processBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            const formData = new FormData();
+            formData.append('video', selectedFile);
+
+            await processVideo('/process', formData);
+        });
+
+        // Demo button
+        demoBtn.addEventListener('click', async () => {
+            await processVideo('/demo', null, true);
+        });
+
+        async function processVideo(endpoint, formData, isDemo = false) {
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            processBtn.disabled = true;
+            demoBtn.disabled = true;
+            hideError();
+
+            try {
+                const options = {
+                    method: isDemo ? 'GET' : 'POST'
+                };
+
+                if (!isDemo) {
+                    options.body = formData;
+                }
+
+                const response = await fetch(endpoint, options);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Processing failed');
+                }
+
+                displayResults(data);
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                loading.style.display = 'none';
+                processBtn.disabled = false;
+                demoBtn.disabled = false;
+            }
+        }
+
+        function displayResults(data) {
+            // Show success message
+            success.style.display = 'block';
+
+            // Update video info
+            document.getElementById('duration').textContent = data.video_info.duration.toFixed(2) + 's';
+            document.getElementById('fps').textContent = data.video_info.fps.toFixed(1);
+            document.getElementById('totalFrames').textContent = data.video_info.total_frames;
+            document.getElementById('keyframeCount').textContent = data.num_keyframes;
+
+            // Display importance plot
+            document.getElementById('importancePlot').src = 'data:image/png;base64,' + data.plot;
+
+            // Display keyframes
+            const grid = document.getElementById('keyframesGrid');
+            grid.innerHTML = '';
+
+            data.keyframes.forEach((kf, idx) => {
+                const card = document.createElement('div');
+                card.className = 'keyframe-card';
+                card.innerHTML = `
+                    <img class="keyframe-image" src="data:image/jpeg;base64,${kf.image}" alt="Keyframe ${kf.index}">
+                    <div class="keyframe-info">
+                        <strong>Keyframe #${idx + 1}</strong>
+                        <div class="keyframe-meta">
+                            <span>Frame ${kf.index}</span>
+                            <span>${kf.time}</span>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <span class="score-badge">Score: ${kf.score.toFixed(3)}</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            // Show results
+            results.style.display = 'block';
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showError(message) {
+            error.textContent = '❌ Error: ' + message;
+            error.style.display = 'block';
+        }
+
+        function hideError() {
+            error.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
