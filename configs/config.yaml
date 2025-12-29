@@ -1,0 +1,113 @@
+# Project Configuration
+# ====================
+
+# Dataset Configuration
+dataset:
+  tvsum_videos: "data/tvsum/videos"
+  tvsum_h5: "data/tvsum/tvsum.h5"
+  num_frames: 60  # 2 FPS for 30s video
+  img_size: 224
+  split_ratio:
+    train: 0.7
+    val: 0.15
+    test: 0.15
+
+# Model 1 Configuration (ResNet50 + Transformer)
+model1:
+  name: "ResNet50Keyframe"
+  feature_extractor: "resnet50"
+  feature_dim: 512
+  num_transformer_layers: 3
+  num_heads: 8
+  dim_feedforward: 2048
+  dropout: 0.1
+  pretrained: true
+
+# Model 2 Configuration (EfficientNet-B0 + Transformer)
+model2:
+  name: "EfficientNetKeyframe"
+  feature_extractor: "efficientnet_b0"
+  feature_dim: 512
+  num_transformer_layers: 3
+  num_heads: 8
+  dim_feedforward: 2048
+  dropout: 0.1
+  pretrained: true
+
+# Training Configuration
+training:
+  # Stage 1: Frozen backbone
+  stage1:
+    epochs: 10
+    learning_rate: 0.0001  # 1e-4
+    freeze_backbone: true
+  
+  # Stage 2: Unfrozen backbone
+  stage2:
+    epochs: 20
+    learning_rate: 0.00001  # 1e-5
+    freeze_backbone: false
+    unfreeze_last_n_blocks: 2
+  
+  # Common settings
+  batch_size: 4
+  num_workers: 2
+  weight_decay: 0.01
+  gradient_clip_norm: 1.0
+  loss: "RankingLoss"  # Spearman-based
+  optimizer: "AdamW"
+
+# Checkpointing
+checkpointing:
+  save_dir: "checkpoints"
+  log_dir: "logs"
+  save_frequency: 1  # Save every N epochs
+  save_best_only: false  # Also save regular checkpoints
+  monitor: "val_loss"  # Metric to monitor for best model
+  mode: "min"  # min or max
+
+# Evaluation
+evaluation:
+  metrics:
+    - "spearman"
+    - "kendall"
+    - "mse"
+    - "mae"
+    - "precision_at_k"
+    - "f1_score"
+  keyframe_threshold: 0.15  # Top 15% frames
+  num_benchmark_iters: 10
+
+# Web Application
+webapp:
+  upload_folder: "webapp/uploads"
+  output_folder: "webapp/static/outputs"
+  max_content_length: 524288000  # 500MB in bytes
+  host: "0.0.0.0"
+  port: 5000
+  debug: false
+
+# Inference
+inference:
+  device: "auto"  # auto, cpu, or cuda
+  batch_size: 4
+  use_amp: false  # Automatic Mixed Precision
+  benchmark_mode: true  # Enable cudNN benchmark
+
+# Visualization
+visualization:
+  importance_curve:
+    figsize: [12, 5]
+    dpi: 150
+    linewidth: 2
+  keyframe_grid:
+    columns: 4
+    figsize: [16, 12]
+    dpi: 150
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  tensorboard: true
+  console: true
+  file: "training.log"

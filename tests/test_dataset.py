@@ -4,6 +4,7 @@ This verifies that videos and annotations load correctly.
 """
 import os
 import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # You need to set these paths to your actual dataset location
 VIDEO_DIR = "E:/DL_project_finalized/data/videos"  # Updated!
@@ -40,10 +41,10 @@ def test_dataset_loading():
     # Try to import dataset module
     print("\n2️⃣ Loading dataset module...")
     try:
-        from dataset import TVSumDataset
-        print("✓ Dataset module loaded")
+        from src.data.dataset import TVSumDataset
+        print("[OK] Dataset module loaded")
     except Exception as e:
-        print(f"❌ Failed to import dataset: {e}")
+        print(f"[ERROR] Failed to import dataset: {e}")
         return False
     
     # Create dataset
