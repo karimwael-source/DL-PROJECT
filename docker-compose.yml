@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  schizego:
+    build: .
+    container_name: schizego-app
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./static/outputs:/app/static/outputs
+    environment:
+      - FLASK_ENV=production
+    restart: unless-stopped
