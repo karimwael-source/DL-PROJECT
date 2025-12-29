@@ -3,6 +3,7 @@ import torch
 import cv2
 import numpy as np
 import os
+import sys
 from werkzeug.utils import secure_filename
 import base64
 from io import BytesIO
@@ -10,7 +11,11 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from model import create_model
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from src.models.model1 import create_model
+from src.models.model2 import create_model2
 from torchvision import transforms
 
 app = Flask(__name__)
@@ -22,20 +27,31 @@ app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB max
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['OUTPUT_FOLDER'], exist_ok=True)
 
-# Global model variable - load lazily
-model = None
+# Global model variables - load lazily
+model1 = None
+model2 = None
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def load_model_if_needed():
+def load_model_if_needed(model_choice='model1'):
     """Load model only when needed."""
-    global model
-    if model is None:
-        print(f"Loading model on {device}...")
-        model = create_model(freeze_resnet=False)
-        model = model.to(device)
-        model.eval()
-        print("✓ Model loaded successfully!")
-    return model
+    global model1, model2
+    
+    if model_choice == 'model1':
+        if model1 is None:
+            print(f"Loading Model 1 (ResNet50) on {device}...")
+            model1 = create_model(freeze_resnet=False)
+            model1 = model1.to(device)
+            model1.eval()
+            print("[OK] Model 1 loaded successfully!")
+        return model1
+    else:  # model2
+        if model2 is None:
+            print(f"Loading Model 2 (EfficientNet-B0) on {device}...")
+            model2 = create_model2(freeze_efficientnet=False)
+            model2 = model2.to(device)
+            model2.eval()
+            print("[OK] Model 2 loaded successfully!")
+        return model2
 
 # Image transform
 transform = transforms.Compose([
@@ -86,9 +102,9 @@ def extract_frames(video_path, num_frames=60):
     return torch.stack(frames), raw_frames, fps, duration
 
 
-def predict_keyframes(video_path):
+def predict_keyframes(video_path, model_choice='model1', num_keyframes=9):
     """Process video and predict keyframes."""
-    model = load_model_if_needed()
+    model = load_model_if_needed(model_choice)
     
     # Extract frames
     frames, raw_frames, fps, duration = extract_frames(video_path, num_frames=60)
@@ -102,8 +118,8 @@ def predict_keyframes(video_path):
     
     importance_scores = importance_scores.squeeze(0).cpu().numpy()
     
-    # Select top 15% as keyframes
-    k = int(0.15 * len(importance_scores))
+    # Select top k keyframes (user-specified)
+    k = min(num_keyframes, len(importance_scores))  # Ensure k doesn't exceed total frames
     keyframe_indices = np.argsort(importance_scores)[-k:]
     keyframe_indices = np.sort(keyframe_indices)
     
@@ -113,7 +129,8 @@ def predict_keyframes(video_path):
         'raw_frames': raw_frames,
         'fps': fps,
         'duration': duration,
-        'total_frames': len(raw_frames)
+        'total_frames': len(raw_frames),
+        'model_used': model_choice
     }
 
 
@@ -158,6 +175,11 @@ def frame_to_base64(frame):
 @app.route('/')
 def index():
     """Render main page."""
+    return render_template('index_enhanced.html')
+
+@app.route('/v1')
+def index_v1():
+    """Render v1 interface."""
     return render_template('index_new.html')
 
 @app.route('/old')
@@ -177,6 +199,16 @@ def process_video():
     if video_file.filename == '':
         return jsonify({'error': 'No video selected'}), 400
     
+    # Get model choice and keyframe count from form
+    model_choice = request.form.get('model', 'model1')
+    num_keyframes = int(request.form.get('num_keyframes', 9))
+    
+    # Validate inputs
+    if model_choice not in ['model1', 'model2']:
+        model_choice = 'model1'
+    if num_keyframes < 1 or num_keyframes > 60:
+        num_keyframes = 9
+    
     # Save video
     filename = secure_filename(video_file.filename)
     video_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -184,8 +216,8 @@ def process_video():
     
     try:
         # Process video
-        print(f"Processing video: {filename}")
-        results = predict_keyframes(video_path)
+        print(f"Processing video: {filename} with {model_choice}, requesting {num_keyframes} keyframes")
+        results = predict_keyframes(video_path, model_choice, num_keyframes)
         
         # Create importance curve plot
         plot_base64 = create_importance_plot(results['importance_scores'], results['keyframe_indices'])
@@ -227,6 +259,16 @@ def process_video():
 @app.route('/demo')
 def demo():
     """Create a demo with synthetic video."""
+    # Get model choice and keyframe count from query parameters
+    model_choice = request.args.get('model', 'model1')
+    num_keyframes = int(request.args.get('num_keyframes', 9))
+    
+    # Validate inputs
+    if model_choice not in ['model1', 'model2']:
+        model_choice = 'model1'
+    if num_keyframes < 1 or num_keyframes > 60:
+        num_keyframes = 9
+    
     # Create synthetic video (30 seconds, changing colors)
     output_path = os.path.join(app.config['UPLOAD_FOLDER'], 'demo_video.mp4')
     
@@ -260,7 +302,7 @@ def demo():
     out.release()
     
     # Process demo video
-    results = predict_keyframes(output_path)
+    results = predict_keyframes(output_path, model_choice, num_keyframes)
     plot_base64 = create_importance_plot(results['importance_scores'], results['keyframe_indices'])
     
     keyframes_base64 = []

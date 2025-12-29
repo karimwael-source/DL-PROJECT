@@ -5,8 +5,8 @@ import cv2
 import os
 from tqdm import tqdm
 
-from model import create_model
-from dataset import TVSumDataset
+from src.models.model1 import create_model
+from src.data.dataset import TVSumDataset
 
 
 def plot_importance_curve(video_name, predicted_scores, gt_scores, save_path=None):

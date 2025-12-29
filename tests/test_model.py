@@ -2,8 +2,12 @@
 Quick test script to verify the model works without dataset.
 Tests model architecture and forward pass with dummy data.
 """
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import torch
-from model import create_model
+from src.models.model1 import create_model
 
 
 def test_model():

@@ -8,8 +8,8 @@ import os
 import argparse
 from datetime import datetime
 
-from model import create_model
-from dataset import create_dataloaders
+from src.models.model1 import create_model
+from src.data.dataset import create_dataloaders
 
 
 class RankingLoss(nn.Module):
