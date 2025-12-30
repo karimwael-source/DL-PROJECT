@@ -77,3 +77,19 @@ kaggle.json
 # OS
 Thumbs.db
 desktop.ini
+
+# CI/CD
+coverage.xml
+htmlcov/
+.coverage
+.pytest_cache/
+.tox/
+.hypothesis/
+*.cover
+.cache
+nosetests.xml
+*.coveragerc
+
+# Docker
+docker-image.tar.gz
+*.tar.gz

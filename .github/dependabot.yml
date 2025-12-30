@@ -1,0 +1,65 @@
+version: 2
+updates:
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+      prefix-development: "ci"
+      include: "scope"
+
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps"
+      include: "scope"
+    # Ignore major version updates for stable packages
+    ignore:
+      - dependency-name: "torch"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "torchvision"
+        update-types: ["version-update:semver-major"]
+    # Group related dependencies
+    groups:
+      pytorch:
+        patterns:
+          - "torch*"
+      opencv:
+        patterns:
+          - "opencv*"
+      flask:
+        patterns:
+          - "flask*"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
