@@ -46,7 +46,7 @@ jobs:
         docker save ${{ env.DOCKER_IMAGE_NAME }}:${{ github.event.inputs.tag }} | gzip > docker-image.tar.gz
     
     - name: Upload Docker image artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: docker-image
         path: docker-image.tar.gz
