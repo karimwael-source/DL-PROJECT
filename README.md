@@ -1,8 +1,8 @@
 # Keyframe Detection Project
 
-[![CI/CD Pipeline](https://github.com/<username>/<repo>/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/<username>/<repo>/actions/workflows/ci-cd.yml)
-[![Tests](https://github.com/<username>/<repo>/actions/workflows/tests.yml/badge.svg)](https://github.com/<username>/<repo>/actions/workflows/tests.yml)
-[![Docker Build](https://github.com/<username>/<repo>/actions/workflows/docker-build.yml/badge.svg)](https://github.com/<username>/<repo>/actions/workflows/docker-build.yml)
+[![CI/CD Pipeline](https://github.com/karimwael-source/schizego/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/karimwael-source/schizego/actions/workflows/ci-cd.yml)
+[![Tests](https://github.com/karimwael-source/schizego/actions/workflows/tests.yml/badge.svg)](https://github.com/karimwael-source/schizego/actions/workflows/tests.yml)
+[![Docker Build](https://github.com/karimwael-source/schizego/actions/workflows/docker-build.yml/badge.svg)](https://github.com/karimwael-source/schizego/actions/workflows/docker-build.yml)
 
 > 🚀 **CI/CD Enabled**: Automated testing, Docker builds, and deployment pipeline configured!  
 > 📦 **Docker Images**: Available on GitHub Container Registry  
