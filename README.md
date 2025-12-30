@@ -1,5 +1,13 @@
 # Keyframe Detection Project
 
+[![CI/CD Pipeline](https://github.com/<username>/<repo>/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/<username>/<repo>/actions/workflows/ci-cd.yml)
+[![Tests](https://github.com/<username>/<repo>/actions/workflows/tests.yml/badge.svg)](https://github.com/<username>/<repo>/actions/workflows/tests.yml)
+[![Docker Build](https://github.com/<username>/<repo>/actions/workflows/docker-build.yml/badge.svg)](https://github.com/<username>/<repo>/actions/workflows/docker-build.yml)
+
+> 🚀 **CI/CD Enabled**: Automated testing, Docker builds, and deployment pipeline configured!  
+> 📦 **Docker Images**: Available on GitHub Container Registry  
+> 🔧 **Quick Start**: See [CI/CD Guide](docs/ci-cd/GUIDE.md) | [Quick Reference](docs/ci-cd/QUICK_REFERENCE.md) | [Setup Checklist](docs/ci-cd/CHECKLIST.md)
+
 ## 📁 New Project Structure (Reorganized)
 
 ```

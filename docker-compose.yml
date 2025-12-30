@@ -1,7 +1,9 @@
+version: '3.8'
+
 services:
-  schizego:
+  dl-project:
     build: .
-    container_name: schizego-app
+    container_name: dl-project-app
     ports:
       - "5000:5000"
     volumes:

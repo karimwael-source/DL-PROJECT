@@ -1,0 +1,53 @@
+name: Docker Build Only
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Docker image tag'
+        required: false
+        default: 'manual'
+
+env:
+  DOCKER_IMAGE_NAME: dl-project-video-summarization
+
+jobs:
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: false
+        tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ github.event.inputs.tag }}
+        load: true
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Test Docker image
+      run: |
+        echo "Testing Docker image..."
+        docker images
+        # You can add docker run tests here
+        # docker run --rm ${{ env.DOCKER_IMAGE_NAME }}:${{ github.event.inputs.tag }} python -c "import torch; print(torch.__version__)"
+    
+    - name: Save Docker image as artifact
+      run: |
+        docker save ${{ env.DOCKER_IMAGE_NAME }}:${{ github.event.inputs.tag }} | gzip > docker-image.tar.gz
+    
+    - name: Upload Docker image artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: docker-image
+        path: docker-image.tar.gz
+        retention-days: 7
